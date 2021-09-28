@@ -9,7 +9,8 @@ endif()
 
 
 set(SOURCE_PATH "${PROJECT_SOURCE_DIR}/src")
-
+include_directories(${SOURCE_PATH})
+add_library(my_list ${SOURCE_PATH}/MyList.cpp ${SOURCE_PATH}/Allocator.h ${SOURCE_PATH}/MyList.h)
 # find packages
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 
@@ -24,8 +25,9 @@ target_compile_options(version_lib PRIVATE
 )
 
 
-add_executable(allocator ${SOURCE_PATH}/allocator.cpp)
+add_executable(allocator ${SOURCE_PATH}/main.cpp)
 
+target_link_libraries(allocator my_list)
 
 set_target_properties(allocator PROPERTIES
         CXX_STANDARD 17
