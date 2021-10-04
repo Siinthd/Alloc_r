@@ -6,50 +6,9 @@
 #include <vector>
 #include <cstring>
 
-//класс который резервирует память
-//сейчас утечка памяти
-class memory_pool
-{
+template<typename T,size_t BLOCKS>
+struct _allocator {
     public:
-    memory_pool(std::size_t type_size,std::size_t reserve_count)
-    { 
-        mem_pool_ = std::malloc(type_size * reserve_count); //резервируем согласно шаблону и количеству элементов
-
-        if(mem_pool_ != nullptr)
-            {
-                reserved_count_ = reserve_count;
-                element_size_ = type_size;
-            }
-    }
-
-    void* get_next_allocated_mem()
-    {
-        if(elements_count_ < reserved_count_)
-        {
-            return mem_pool_ + (elements_count_++ * element_size_);
-        }
-        else
-        {
-            void *ptr = std::malloc(element_size_ * reserved_count_ * 2); //если выделяемых количество элементов превышает резерв,выделяем память*2
-            if(ptr != nullptr)
-            {
-            std::memmove(ptr, mem_pool_, element_size_ * reserved_count_); //перемещаем в новое место
-            reserved_count_ *= 2;
-            mem_pool_ = ptr;
-            return mem_pool_ + (elements_count_++ * element_size_);
-            }
-        }
-    }
-
-  private:
-    void* mem_pool_ = nullptr;
-    std::size_t element_size_ = 0;
-    std::size_t elements_count_ = 0;
-    std::size_t reserved_count_ = 0;
-};
-
-template<typename T>
-struct logging_allocator {
     using value_type = T;
     using pointer = T*;
     using const_pointer = const T*;
@@ -58,34 +17,66 @@ struct logging_allocator {
 
     template<typename U>
     struct rebind {
-        using other = logging_allocator<U>;
+        using other = _allocator<U,BLOCKS>;
     };
 
-    logging_allocator(): _mem(sizeof(T), 10){ }
+    private:
+    T* newMemory = nullptr;
+    unsigned takens = 0;
 
-    T *allocate(std::size_t n)  {
-        auto p = _mem.get_next_allocated_mem(); //здесь происходит выделение памяти
-        if (!p)
+    public:
+
+    T* allocate(std::size_t n)
+    {
+        std::cout << __PRETTY_FUNCTION__ << std::endl; 
+        T* res = newMemory+takens;
+        takens+=n;
+        if(takens<=BLOCKS)
+            return res;
+        else
             throw std::bad_alloc();
-        return reinterpret_cast<T *>(p);
     }
 
-    void deallocate(T *p, std::size_t n)  {
-       // std::free(p);
-    }
+    void deallocate([[maybe_unused]] T* p,[[maybe_unused]] std::size_t n) const {std::cout << __PRETTY_FUNCTION__ << std::endl; }
 
-    template<typename U, typename ...Args>
-    void construct(U *p, Args &&...args)  {
-
+    template<typename U,typename ...Args>
+    void construct(U *p,Args&& ...args) const
+    {
+        std::cout << __PRETTY_FUNCTION__ << std::endl; 
         new(p) U(std::forward<Args>(args)...);
     }
 
-    void destroy(T *p)  {
-
-        p->~T();
+    template<typename U>
+    void destroy(U* p) const
+    {
+        std::cout << __PRETTY_FUNCTION__ << std::endl; 
+        p->~U();
     }
-    private:
-    memory_pool _mem; //та самая область
+
+
+    _allocator()
+    {
+        std::cout << __PRETTY_FUNCTION__ << std::endl; 
+        newMemory = (T*)std::malloc(BLOCKS * sizeof(T));
+    }
+    _allocator(const _allocator&) = delete;
+
+    _allocator(_allocator&& ob) noexcept
+    {
+        std::cout << __PRETTY_FUNCTION__ << std::endl; 
+        newMemory = ob.newMemory;
+        takens = ob.takens;
+        ob.newMemory = nullptr;
+        ob.takens = 0;
+    }
+
+    ~_allocator()
+    {
+        std::cout << __PRETTY_FUNCTION__ << std::endl; 
+        if(newMemory)
+            std::free(newMemory);
+    }
+
 };
 
 #endif

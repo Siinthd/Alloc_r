@@ -2,150 +2,133 @@
 #define _LIST_H 
 #include "Allocator.h"
 
-    // Структура узла односвязного списка
-    template< typename T>
-    struct Node {
-        Node() : m_next( nullptr ) { }
-
-        Node( const T& t ) : m_t( t ), m_next( nullptr ) { }
-
-        // Значение узла
-        T m_t;
-
-        // Указатель на следующий узел
-        Node* m_next;
-    };
-
-
-template< typename T, typename A = std::allocator<Node<T>>>
-class List {
-private:
-    // Объявляем структуру узла для использования в классе Iterator
-    struct Node;
-
-public:
-    // Класс итератора односвязного списка
-class Iterator {
-public:
-    Iterator( Node* node ) : m_node( node ) { }
-
-    // Проверка на равенство
-    bool operator==( const Iterator& other ) const {
-        if( this == &other ) {
-            return true;
-        }
-        return m_node == other.m_node;
+template<typename T>
+struct Node
+{
+    public:
+    T data;
+    Node<T>* m_next;
+    Node(T data,Node* m_next = nullptr)
+    {
+        this->data = data;
+        this->m_next = m_next;
     }
-
-    // Проверка на неравенство
-    bool operator!=( const Iterator& other ) const {
-        return !operator==( other );
-    }
-
-    // Получение значения текущего узла
-    T operator*() const {
-        if( m_node ) {
-            return m_node->m_t;
-        } // Иначе достигнут конец списка. Здесь уместно возбудить исключение
-        return T();
-    }
-
-    // Переход к следующему узлу
-    void operator++() {
-        if( m_node ) {
-            m_node = m_node->m_next;
-        } // Иначе достигнут конец списка. Здесь уместно возбудить исключение
-    }
-
-private:
-    Node* m_node;
 };
 
-public:
+template<typename T,typename A = std::allocator<T>>
+class List{
+    public:
     List();
+
+    template <typename ...Args>
+    void Emplace(Args ...args);
 
     ~List();
 
-    // Добавляем узел в список
-    void append( const T& t );
 
-    // Удаляем последний добавленный узел из списка
-    void remove();
+    //TODO
 
-    // Получаем головной элемент списка
-    T head() const;
+     List(const List &ob);
+     List(List &&ob) noexcept;
 
-    // Получаем итератор на начало списка
-    Iterator begin() const;
-    // Получаем итератор на конец списка
-    Iterator end() const;
+    template <typename ObAlloc>
+    List(const List<T,ObAlloc> &ob);
 
-    // Получаем размер списка
-    size_t size() const;
+    template <typename ObAlloc>
+    List(List<T,ObAlloc> &&ob);
 
-private:
+    // Iterator<T> begin() {return Iterator<T>(pHead);}
+    // Iterator<T> end()   {return Iterator<T>();}
 
-    A allocator_;
-    // Голова односвязного списка
-    Node* m_head;
+    Node<T>* getHead() const {return m_head;}
+    Node<T>* getNext() const {return m_head->m_next;}
+
+    friend std::ostream& operator<<(std::ostream& out, const List<T> &li)
+    {
+        Node<T>* temp = li.getHead();
+        if(!temp)
+            return out;
+        while(temp)
+        {
+            out<< temp->data;
+            temp = temp->m_next;
+            out<<std::endl;
+        }
+        return out;
+    }
+    private:
+    Node<T>* m_head;
+    size_t m_count;
+    typename A::template rebind<Node<T>>::other m_Alloc;
 };
 
-template< typename T, typename A >
-List< T,A >::List() : m_head( nullptr ) {
+template <typename T, typename Allocator /*= std::allocator<T>*/>
+List<T,Allocator>::List(const List<T,Allocator> &rhs)
+{
+    std::cout << __PRETTY_FUNCTION__ << std::endl; 
+
+    if(!rhs.getHead())
+        return;
+    else
+    {
+        Node<T>* _fromPtr = rhs.getHead();
+        m_head = new Node<T>(_fromPtr->data);
+        _fromPtr = _fromPtr->m_next;
+        Node<T>* _current = m_head;
+
+        while (_fromPtr)
+        {
+            _current->m_next = new Node<T>(_fromPtr->data);
+            _fromPtr = _fromPtr->m_next;
+            _current = _current->m_next;
+        }
+    }
+    
 }
+//move constr
+template <typename T, typename Allocator /*= std::allocator<T>*/>
+List<T,Allocator>::List(List<T,Allocator> &&rhs) noexcept : m_head(rhs.m_head),m_count(rhs.m_count)
+{ 
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    // m_head = rhs.m_head;
+    // m_count = rhs.m_count;
+    rhs.m_head = nullptr;
+    rhs.m_count = 0;
+    //also
+    // std::swap(m_head, rhs.m_head);
+    // std::swap(m_count, rhs.m_count);
+ }
 
-template< typename T, typename A >
-void List< T,A >::append( const T &t ) {
-   // Создаём новый узел для значения
-   // Если произойдёт исключение, контейнер не пострадает
-   Node* node = new Node( t );
-   // Новый узел привязывается к старому головному элементу
-   node->m_next = m_head;
-   // Новый узел сам становится головным элементом
-   m_head = node;
-}
+template<typename T,typename A>
+List<T,A>::List():m_count(0)
+{}
 
-template< typename T, typename A >
-void List< T,A >::remove() {
-    if( m_head ) { // Если список не пуст:
-        // Сохраняем указатель на второй узел, который станет новым головным элементом
-        Node* newHead = m_head->m_next;
-
-        // Освобождаем память, выделенную для удаляемого головного элемента
-        delete m_head;
-
-        // Назначаем новый головной элемент
-        m_head = newHead;
-    } // Иначе мы могли бы возбудить исключение
-}
-
-template< typename T, typename A >
-List< T,A >::~List() {
-    while( m_head ) {
-        remove();
+template<typename T,typename A>
+List<T,A>::~List()
+{
+    std::cout << __PRETTY_FUNCTION__ << std::endl; 
+    while(m_head)
+    {
+        Node<T>* _temp = m_head;
+        m_head = m_head->m_next;
+        delete _temp;
     }
 }
-
-
-template< typename T, typename A >
-typename List< T,A >::Iterator List< T,A >::begin() const {
-    // Итератор пойдет от головного элемента...
-    return Iterator( m_head );
+template<typename T,typename A>
+template <typename ...Args>
+void List<T,A>::Emplace(Args ...args)
+{
+    if (!m_head)
+        m_head = new Node<T>(std::forward<Args>(args)...);
+        else
+        {
+            Node<T>* _curr = this->m_head;
+            while(_curr->m_next)
+                _curr=_curr->m_next;
+            _curr->m_next = new Node<T>(std::forward<Args>(args)...);
+        }
+        m_count++;
 }
 
-template< typename T, typename A >
-typename List< T,A >::Iterator List< T,A >::end() const {
-    // ... и до упора, т.е. NULL
-    return Iterator( NULL );
-}
-
-template< typename T, typename A >
-size_t List< T,A >::size() const {
-    size_t s = 0;
-    for( Iterator it = begin(); it != end(); ++it ) {
-        ++s;
-    }
-    return s;
-}
 
 #endif
