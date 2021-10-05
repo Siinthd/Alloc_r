@@ -1,21 +1,17 @@
 #include <map>
 #include "MyList.h"
-
+#include <list>
 struct hard {
     int i;
     double d;
+    
 
+    hard() : i(0), d(0) { std::cout << __PRETTY_FUNCTION__ << std::endl; };
     hard(int i, double d) : i(i), d(d) { std::cout << __PRETTY_FUNCTION__ << std::endl; };
     hard & operator=(const hard &ob) = default;
-    hard(const hard &)
-    { std::cout << __PRETTY_FUNCTION__ << std::endl; };
-
-     hard(hard &&) noexcept
-    { std::cout << __PRETTY_FUNCTION__ << std::endl; };
-
-    ~hard() { std::cout << __PRETTY_FUNCTION__ << std::endl; };
-    friend std::ostream& operator<<(std::ostream& os,const hard& t )
-    {
+    hard(const hard &)= default;
+    hard(hard &&) noexcept= default;
+    friend std::ostream& operator<<(std::ostream& os,const hard& t ){
         os<<t.i<<" -- "<<t.d;
         return os;
     }
@@ -24,14 +20,13 @@ struct hard {
 
 int main(/*int, char *[]*/) {
 
-    List<int> lst;
+    List<hard> lst;
     for(int i = 0;i<25;i++)
-        lst.Emplace(i*i*i);
-    List<int> lst2(lst);
-    List<int> lst3 = std::move(lst);
-
- //   std::cout<<lst<<std::endl;
-  //  std::cout<<lst2<<std::endl;
- //   std::cout<<lst3<<std::endl;
+        lst.Emplace(hard{i,i*i*i});
+    List<hard> lst2(lst);
+    List<hard> lst3 = std::move(lst);
+    
+   std::cout<<lst2<<std::endl;
+   std::cout<<lst3<<std::endl;
     return 0;
 }

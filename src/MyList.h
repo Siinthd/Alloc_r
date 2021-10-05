@@ -6,13 +6,13 @@ template<typename T>
 struct Node
 {
     public:
-    T data;
-    Node<T>* m_next;
     Node(T data,Node* m_next = nullptr)
     {
         this->data = data;
         this->m_next = m_next;
     }
+	T data;
+	Node<T> *m_next;
 };
 
 template<typename T,typename A = std::allocator<T>>
@@ -100,7 +100,7 @@ List<T,Allocator>::List(List<T,Allocator> &&rhs) noexcept : m_head(rhs.m_head),m
  }
 
 template<typename T,typename A>
-List<T,A>::List():m_count(0)
+List<T,A>::List():m_count(0),m_head(nullptr)
 {}
 
 template<typename T,typename A>
