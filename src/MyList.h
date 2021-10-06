@@ -15,6 +15,26 @@ struct Node
 	Node<T> *m_next;
 };
 
+template <typename T>
+class Iterator
+    {
+        public:
+            Iterator() = default;
+            Iterator(Node<T>* p) : m_current(p) {}
+            bool operator!=(const Iterator& it) const
+            {
+                return m_current != it.pCur;
+            }
+            const Iterator& operator++() 
+            {
+                m_current = m_current->next;
+                return *this;
+            }
+            T & operator*() {return m_current->data;}
+        private:
+        Node<T>* m_current = nullptr;
+    };
+
 template<typename T,typename A = std::allocator<T>>
 class List{
     public:
@@ -24,10 +44,6 @@ class List{
     void Emplace(Args ...args);
 
     ~List();
-
-
-    //TODO
-
      List(const List &ob);
      List(List &&ob) noexcept;
 
@@ -37,8 +53,8 @@ class List{
     template <typename ObAlloc>
     List(List<T,ObAlloc> &&ob);
 
-    // Iterator<T> begin() {return Iterator<T>(pHead);}
-    // Iterator<T> end()   {return Iterator<T>();}
+    Iterator<T> begin() {return Iterator<T>(m_head);}
+    Iterator<T> end()   {return Iterator<T>();}
 
     Node<T>* getHead() const {return m_head;}
     Node<T>* getNext() const {return m_head->m_next;}
@@ -57,6 +73,7 @@ class List{
         return out;
     }
     private:
+
     Node<T>* m_head;
     size_t m_count;
     typename A::template rebind<Node<T>>::other m_Alloc;
@@ -65,7 +82,7 @@ class List{
 template <typename T, typename Allocator /*= std::allocator<T>*/>
 List<T,Allocator>::List(const List<T,Allocator> &rhs)
 {
-    std::cout << __PRETTY_FUNCTION__ << std::endl; 
+    //std::cout << __PRETTY_FUNCTION__ << std::endl; 
 
     if(!rhs.getHead())
         return;
@@ -79,27 +96,21 @@ List<T,Allocator>::List(const List<T,Allocator> &rhs)
         _fromPtr = _fromPtr->m_next;
         Node<T>* _current = m_head;
 
-        // m_head = new Node<T>(_fromPtr->data);
-        // _fromPtr = _fromPtr->m_next;
-        // Node<T>* _current = m_head;
-
         while (_fromPtr)
         {
             _current->m_next = m_Alloc.allocate(1);
             m_Alloc.construct(&_current->m_next->data, _fromPtr->data);
-            
-            // _current->m_next = new Node<T>(_fromPtr->data);
              _fromPtr = _fromPtr->m_next;
              _current = _current->m_next;
         }
     }
     
 }
-//move constr
+
 template <typename T, typename Allocator /*= std::allocator<T>*/>
 List<T,Allocator>::List(List<T,Allocator> &&rhs) noexcept
 { 
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    //std::cout << __PRETTY_FUNCTION__ << std::endl;
 
     std::swap(m_head, rhs.m_head);
     std::swap(m_count, rhs.m_count);
@@ -114,7 +125,7 @@ List<T,A>::List():m_count(0),m_head(nullptr)
 template<typename T,typename A>
 List<T,A>::~List()
 {
-    std::cout << __PRETTY_FUNCTION__ << std::endl; 
+    //std::cout << __PRETTY_FUNCTION__ << std::endl; 
     while(m_head)
     {
         Node<T>* _temp = m_head;

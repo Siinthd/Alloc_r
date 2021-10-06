@@ -23,19 +23,20 @@ struct _allocator {
     private:
     T* newMemory = nullptr;
     unsigned takens = 0;
-
+    unsigned limit = 0;
     public:
-    
-    //init variant - allocate by one
     T* allocate(std::size_t n)
     {
-        std::cout << "T* allocate(std::size_t n)" << std::endl; 
-        T* res = newMemory+takens;
+        
         takens+=n;
-		if (takens <= BLOCKS)
-			return res;
-		else
-            throw std::bad_alloc();
+		if (takens >= limit)
+        {
+            limit+=10;
+            newMemory = (T*) realloc(newMemory, limit * sizeof(T));
+        }
+        T* res = newMemory+takens;
+        return res;
+        
     }
 
     void deallocate([[maybe_unused]] T* p,[[maybe_unused]] std::size_t n) const {std::cout << __PRETTY_FUNCTION__ << std::endl; }
@@ -43,22 +44,23 @@ struct _allocator {
     template<typename U,typename ...Args>
     void construct(U *p,Args&& ...args) const
     {
-        std::cout << __PRETTY_FUNCTION__ << std::endl; 
+        //std::cout << __PRETTY_FUNCTION__ << std::endl; 
         new(p) U(std::forward<Args>(args)...);
     }
 
     template<typename U>
     void destroy(U* p) const
     {
-        std::cout << __PRETTY_FUNCTION__ << std::endl; 
+        //std::cout << __PRETTY_FUNCTION__ << std::endl; 
         p->~U();
     }
 
 
     _allocator()
     {
-        std::cout << __PRETTY_FUNCTION__ << std::endl; 
+        //std::cout << __PRETTY_FUNCTION__ << std::endl; 
         newMemory = (T*)std::malloc(BLOCKS * sizeof(T));
+        limit = BLOCKS;
     }
     _allocator(const _allocator&) = delete;
 
@@ -74,7 +76,7 @@ struct _allocator {
 
     ~_allocator()
     {
-        std::cout << __PRETTY_FUNCTION__ << std::endl; 
+        //std::cout << __PRETTY_FUNCTION__ << std::endl; 
         if(newMemory)
             std::free(newMemory);
     }
