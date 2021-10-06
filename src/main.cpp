@@ -20,12 +20,14 @@ struct hard {
 
 int main(/*int, char *[]*/) {
 
-    List<hard> lst;
+    List<hard,_allocator<hard,25>> lst;
     for(int i = 0;i<25;i++)
         lst.Emplace(hard{i,i*i*i});
-    List<hard> lst2(lst);
-    List<hard> lst3 = std::move(lst);
+
+    List<hard,_allocator<hard,25>> lst2(lst);
+    auto lst3 = std::move(lst);
     
+   std::cout<<lst<<std::endl;
    std::cout<<lst2<<std::endl;
    std::cout<<lst3<<std::endl;
     return 0;

@@ -25,15 +25,16 @@ struct _allocator {
     unsigned takens = 0;
 
     public:
-
+    
+    //init variant - allocate by one
     T* allocate(std::size_t n)
     {
-        std::cout << __PRETTY_FUNCTION__ << std::endl; 
+        std::cout << "T* allocate(std::size_t n)" << std::endl; 
         T* res = newMemory+takens;
         takens+=n;
-        if(takens<=BLOCKS)
-            return res;
-        else
+		if (takens <= BLOCKS)
+			return res;
+		else
             throw std::bad_alloc();
     }
 
@@ -60,6 +61,7 @@ struct _allocator {
         newMemory = (T*)std::malloc(BLOCKS * sizeof(T));
     }
     _allocator(const _allocator&) = delete;
+
 
     _allocator(_allocator&& ob) noexcept
     {
