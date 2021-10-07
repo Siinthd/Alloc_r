@@ -2,6 +2,21 @@
 #define _LIST_H 
 #include "Allocator.h"
 
+struct hard {
+    int i;
+    double d;
+
+    hard() : i(0), d(0) { /*std::cout << __PRETTY_FUNCTION__ << std::endl;*/ };
+    hard(int i, double d) : i(i), d(d) { /*std::cout << __PRETTY_FUNCTION__ << std::endl;*/ };
+    hard & operator=(const hard &ob) = default;
+    hard(const hard &)= default;
+    hard(hard &&) noexcept= default;
+    friend std::ostream& operator<<(std::ostream& os,const hard& t ){
+        os<< setiosflags(std::ios::left)<< std::setw(2) <<t.i<<" "<<t.d;
+        return os;
+    }
+};
+
 template<typename T>
 struct Node
 {
@@ -23,11 +38,11 @@ class Iterator
             Iterator(Node<T>* p) : m_current(p) {}
             bool operator!=(const Iterator& it) const
             {
-                return m_current != it.pCur;
+                return m_current != it.m_current;
             }
             const Iterator& operator++() 
             {
-                m_current = m_current->next;
+                m_current = m_current->m_next;
                 return *this;
             }
             T & operator*() {return m_current->data;}
@@ -152,5 +167,8 @@ void List<T,A>::Emplace(Args ...args)
         m_count++;
 }
 
+int fibonacci(int);
+
+double Fact(int x);
 
 #endif

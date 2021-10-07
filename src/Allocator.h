@@ -5,6 +5,8 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
+#include <map>
+#include <iomanip>
 
 template<typename T,size_t BLOCKS>
 struct _allocator {
@@ -39,7 +41,7 @@ struct _allocator {
         
     }
 
-    void deallocate([[maybe_unused]] T* p,[[maybe_unused]] std::size_t n) const {std::cout << __PRETTY_FUNCTION__ << std::endl; }
+    void deallocate([[maybe_unused]] T* p,[[maybe_unused]] std::size_t n) const {/*std::cout << __PRETTY_FUNCTION__ << std::endl;*/ }
 
     template<typename U,typename ...Args>
     void construct(U *p,Args&& ...args) const
